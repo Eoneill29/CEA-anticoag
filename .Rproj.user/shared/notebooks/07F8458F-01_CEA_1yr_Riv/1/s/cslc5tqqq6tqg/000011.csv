@@ -1,0 +1,6 @@
+"0",""
+"0","grid.arrange("
+"0","  ggplot(input_params, aes(x=pr.mb_ot)) + geom_histogram() + xlab(""Probability of mb to off-treatment""),"
+"0","  ggplot(input_params, aes(x=pr.nmb_ot)) + geom_histogram() + xlab(""Probability of nmb to off-treatment""),"
+"0","  ncol=1"
+"0",")"

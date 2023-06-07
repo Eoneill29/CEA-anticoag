@@ -1,0 +1,264 @@
+---
+title: "CEA anticoag - warfarin"
+author: "Emily O'Neill, Andrew Huang"
+date: "2023-06-06"
+output: html_document
+---
+
+```{r} 
+##Cost utility analysis of Rivaroxaban in the prevention of VTE reoccurrence versus standard or care with warfarin: A markov Model-Based Simulation  
+
+##remove any variables in R's Memory 
+rm(list = ls()) 
+
+##Install packages for Markov Model
+library(here)
+library(ggplot2)
+library(gridExtra)
+
+# Load Markov model function for both rivaroxaban and warfarin
+source("function_markov.R")
+source("function_plot-trace.R")
+
+``` 
+
+Base case simulation
+
+Model hyperparameters
+
+```{r} 
+##Model Input 
+cycle_length <- 1/12                              # cycle length equals 1 month
+n.t   <- 12                                       # number of cycles, time horizon equals 1 year 
+d.c   <- d.e <- 0.05 / (1/cycle_length)           # discounting of costs and QALYs, annual rate = 5%
+
+#The model states: 
+#(1) No Event = NE; 
+#(2) VTE Recurrence = VR; 
+#(3) Major Bleed = MB; 
+#(4) Clinically relevant Non-Major Bleed = NMB; 
+#(5) Off Treatment = OT 
+
+v.n   <- c("NE", "VR", "MB", "NMB", "OT")         # Model states  
+v.M_1 <- c(1, 0, 0, 0, 0)                         # Everyone begins in index event
+
+``` 
+
+Model parameters for Warfarin
+
+```{r}
+###Warfarin### 
+
+##Health States 
+#Event rates per person-6months converted to person-year:
+r.ne_vr   <- 0.026 * 2               # rate of no event to VTE recurrence 
+r.ne_mb   <- 0.008 * 2               # rate of no event to  major bleed 
+r.ne_nmb  <- 0.308 * 2               # rate of no event to CRNMB
+r.nmb_ot  <- 0.100 * 2               # rate of CNMB to come off treatment  
+r.mb_ot   <- 0.100 * 2               # rate of MB to come off treatment 
+
+#Transition probabilities (per month cycle): 
+pr.ne_vr   <- 1 - exp(-r.ne_vr * cycle_length)        # from no event to VTE recurrence 
+pr.ne_mb   <- 1 - exp(-r.ne_mb * cycle_length)        # from no event to  major bleed 
+pr.ne_nmb  <- 1 - exp(-r.ne_nmb * cycle_length)       # from no event to CRNMB
+pr.ne_ne   <- 1 - sum(pr.ne_vr, pr.ne_mb, pr.ne_nmb)  # from no event to no event  
+pr.nmb_ot  <- 1 - exp(-r.nmb_ot * cycle_length)       # from CNMB to come off treatment  
+pr.mb_ot   <- 1 - exp(-r.mb_ot * cycle_length)        # from MB to come off treatment  
+
+##Costs (per 6 months (year/2))
+c.ne      <- 165  / 12              #Cost for staying healthy in Warfarin arm
+c.vr      <- 267  / 12              #Cost for VTE recurrence in Warfarin arm ($102)  
+c.mb      <- 435  / 12              #Cost for major bleed in Warfarin arm ($270)
+c.nmb     <- 332  / 12              #Cost for CRNMB in Warfarin arm ($167)
+c.ot      <- 0    / 12              #Cost of off treatment
+
+##Utility Values 
+u.ne    <- 0.825               #Utility of No Event
+u.vr    <- 0.76                #Utility of recurrence  
+u.mb    <- 0.61                #Utility of major bleed
+u.nmb   <- 0.65                #Utility of CRNMB 
+u.ot    <- 0.59                #Utility of off treatment 
+
+##Vectors for cost and utility values 
+v.cost <- c(c.ne, c.vr, c.mb, c.nmb, c.ot)
+v.util <- c(u.ne, u.vr, u.mb, u.nmb, u.ot)
+
+``` 
+
+```{r}
+##Run the Simulation  
+sim_markov_war <- Markov(n.t, d.c, d.e, v.n, v.cost, v.util, v.M_1, 
+                         pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+
+sim_markov_war
+
+```
+Plot cohort trace
+```{r}
+
+# Plot cohort trace
+plot_trace(n.t, v.n, sim_markov_war$m.TRr) + ggtitle("Warfarin base case")
+
+```
+
+Save base case results
+
+```{r}
+
+saveRDS(sim_markov_war, here::here("output","results_1yr_war_noMC.rds"))
+
+```
+
+Now try using MC simulation for varying parameter values
+
+```{r} 
+### CEA with Monte Carlo Simulation ###
+
+#Number of MC Samples
+n_samples <- 1000
+#Set the random number seed for reproducibility
+set.seed(123) 
+
+##Warfarin
+#Health States 
+#Event rates per person-6months converted to person-year:
+sample_r.ne_vr   <- rgamma(n_samples, shape = 20, rate = 10000) * 2       # rate of no event to VTE recurrence 
+sample_r.ne_mb   <- rgamma(n_samples, shape = 84, rate = 716 + 84) * 2    # rate of no event to  major bleed 
+sample_r.ne_nmb  <- rgamma(n_samples, shape = 30, rate = 170 + 30) * 2    # rate of no event to CRNMB
+sample_r.nmb_ot  <- runif(n_samples, min = 0, max = 0.20) * 2             # rate of CNMB to come off treatment  
+sample_r.mb_ot   <- runif(n_samples, min = 0, max = 0.20) * 2             # rate of MB to come off treatment 
+
+#Transition probabilities (per month cycle): 
+sample_pr.ne_vr   <- 1 - exp(-sample_r.ne_vr * cycle_length)        # from no event to VTE recurrence 
+sample_pr.ne_mb   <- 1 - exp(-sample_r.ne_mb * cycle_length)        # from no event to  major bleed 
+sample_pr.ne_nmb  <- 1 - exp(-sample_r.ne_nmb * cycle_length)       # from no event to CRNMB
+sample_pr.nmb_ot  <- 1 - exp(-sample_r.nmb_ot * cycle_length)       # from CNMB to come off treatment  
+sample_pr.mb_ot   <- 1 - exp(-sample_r.mb_ot * cycle_length)        # from MB to come off treatment 
+
+# Create dataframe of lists of parameter values for state transition probabilities
+l.probr <- list()
+for (i in 1:n_samples){
+  sample.l.probr <- list(pr.ne_vr = sample_pr.ne_vr[i],
+                         pr.ne_mb = sample_pr.ne_mb[i],
+                         pr.ne_nmb = sample_pr.ne_nmb[i],
+                         pr.ne_ne = 1 - sum(sample_pr.ne_vr[i],
+                                            sample_pr.ne_mb[i],
+                                            sample_pr.ne_nmb[i]),
+                         pr.nmb_ot = sample_pr.nmb_ot[i],
+                         pr.mb_ot = sample_pr.mb_ot[i])
+  l.probr[i] <- list(sample.l.probr)
+}
+df.probr <- as.data.frame(do.call(rbind, l.probr))
+#df.probr <- df.probr %>% rowwise() %>% mutate(sum_test = sum(pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb))
+
+##Costs (per 6 months (year/2))
+c.ne      <- 165  / 12              #Cost for staying healthy in Warfarin arm
+c.vr      <- 267  / 12              #Cost for VTE recurrence in Warfarin arm ($102)  
+c.mb      <- 435  / 12              #Cost for major bleed in Warfarin arm ($270)
+c.nmb     <- 332  / 12              #Cost for CRNMB in Warfarin arm ($167)
+c.ot      <- 0    / 12              #Cost of off treatment
+
+##Utility Values 
+u.ne    <- 0.825               #Utility of No Event
+u.vr    <- 0.76                #Utility of recurrence  
+u.mb    <- 0.61                #Utility of major bleed
+u.nmb   <- 0.65                #Utility of CRNMB 
+u.ot    <- 0.59                #Utility of off treatment 
+
+##Vectors for cost and utility values 
+v.cost <- c(c.ne, c.vr, c.mb, c.nmb, c.ot)
+v.util <- c(u.ne, u.vr, u.mb, u.nmb, u.ot)
+
+## Generate an input dataframe containing parameters for each simulation
+input_params <- as.data.frame(cbind(nsim = seq(1, n_samples),
+                                 n.t = rep(n.t, n_samples),
+                                 d.c = rep(d.c, n_samples),
+                                 d.e = rep(d.e, n_samples),
+                                 v.n = rep(list(v.n), n_samples),
+                                 v.cost = rep(list(v.cost), n_samples),
+                                 v.util = rep(list(v.util), n_samples),
+                                 v.M_1 = rep(list(v.M_1), n_samples),
+                                 pr.ne_ne = df.probr$pr.ne_ne,
+                                 pr.ne_vr = df.probr$pr.ne_vr,
+                                 pr.ne_mb = df.probr$pr.ne_mb,
+                                 pr.ne_nmb = df.probr$pr.ne_nmb,
+                                 pr.mb_ot = df.probr$pr.mb_ot,
+                                 pr.nmb_ot = df.probr$pr.nmb_ot))
+
+input_params$nsim = as.character(input_params$nsim)
+input_params$n.t = as.numeric(input_params$n.t)
+input_params$d.c = as.numeric(input_params$d.c)
+input_params$d.e = as.numeric(input_params$d.e)
+input_params$pr.ne_ne = as.numeric(input_params$pr.ne_ne)
+input_params$pr.ne_vr = as.numeric(input_params$pr.ne_vr)
+input_params$pr.ne_mb = as.numeric(input_params$pr.ne_mb)
+input_params$pr.ne_nmb = as.numeric(input_params$pr.ne_nmb)
+input_params$pr.mb_ot = as.numeric(input_params$pr.mb_ot)
+input_params$pr.nmb_ot = as.numeric(input_params$pr.nmb_ot)
+
+```
+
+```{r}
+# Plot simulated values
+grid.arrange(
+  ggplot(input_params, aes(x=pr.ne_ne)) + geom_histogram() + xlab("Probability of no event to no event"),
+  ggplot(input_params, aes(x=pr.ne_vr)) + geom_histogram() + xlab("Probability of no event to vr"),
+  ggplot(input_params, aes(x=pr.ne_mb)) + geom_histogram() + xlab("Probability of no event to mb"),
+  ggplot(input_params, aes(x=pr.ne_nmb)) + geom_histogram() + xlab("Probability of no event to nmb"),
+  ncol=1
+)
+
+grid.arrange(
+  ggplot(input_params, aes(x=pr.mb_ot)) + geom_histogram() + xlab("Probability of mb to off-treatment"),
+  ggplot(input_params, aes(x=pr.nmb_ot)) + geom_histogram() + xlab("Probability of nmb to off-treatment"),
+  ncol=1
+)
+```
+
+```{r}
+#Initialize dataframe to store results
+results_war <- data.frame(nsim = as.character(seq(1:n_samples)))
+  
+for (i in 1:n_samples){
+  sim_markov_war <- Markov(n.t = input_params$n.t[[i]], 
+                           d.c = input_params$d.c[[i]],  
+                           d.e = input_params$d.e[[i]],  
+                           v.n = input_params$v.n[[i]],  
+                           v.cost = input_params$v.cost[[i]],  
+                           v.util = input_params$v.util[[i]],  
+                           v.M_1 = input_params$v.M_1[[i]],  
+                           pr.ne_ne = input_params$pr.ne_ne[[i]],  
+                           pr.ne_vr = input_params$pr.ne_vr[[i]],  
+                           pr.ne_mb = input_params$pr.ne_mb[[i]],  
+                           pr.ne_nmb = input_params$pr.ne_nmb[[i]],  
+                           pr.mb_ot = input_params$pr.mb_ot[[i]],  
+                           pr.nmb_ot = input_params$pr.nmb_ot[[i]])
+  results_war$trace[i] <- list(sim_markov_war$m.TRr)
+  results_war$tc_hat[i] <- sim_markov_war$tc_hat
+  results_war$te_hat[i] <- sim_markov_war$te_hat
+}
+```
+
+```{r}
+
+results <- cbind(input_params, results_war[,-1])
+results
+
+```
+
+```{r}
+
+summary(results$tc_hat)
+summary(results$te_hat)
+
+```
+
+Save sim results
+
+```{r}
+
+saveRDS(results, here::here("output","results_1yr_war.rds"))
+
+```
+
+

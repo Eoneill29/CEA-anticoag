@@ -1,0 +1,4 @@
+"0",""
+"0","# Plot cohort trace"
+"0","plot_trace(n.t, v.n, sim_markov_war$m.TRr) + ggtitle(""Warfarin base case"")"
+"0",""

@@ -1,0 +1,8 @@
+"0","# Plot simulated values"
+"0","grid.arrange("
+"0","  ggplot(input_params, aes(x=pr.ne_ne)) + geom_histogram() + xlab(""Probability of no event to no event""),"
+"0","  ggplot(input_params, aes(x=pr.ne_vr)) + geom_histogram() + xlab(""Probability of no event to vr""),"
+"0","  ggplot(input_params, aes(x=pr.ne_mb)) + geom_histogram() + xlab(""Probability of no event to mb""),"
+"0","  ggplot(input_params, aes(x=pr.ne_nmb)) + geom_histogram() + xlab(""Probability of no event to nmb""),"
+"0","  ncol=1"
+"0",")"

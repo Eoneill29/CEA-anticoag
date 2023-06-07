@@ -1,0 +1,58 @@
+---
+title: "CEA anticoag"
+author: "Emily O'Neill, Andrew Huang"
+date: "2023-06-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r} 
+##Cost utility analysis of Rivaroxaban in the prevention of VTE reoccurrence versus standard or care with warfarin: A markov Model-Based Simulation  
+
+##remove any variables in R's Memory 
+rm(list = ls()) 
+
+##Install packages for Markov Model 
+library("heemod")
+library("diagram")
+library("flexsurv")
+library("mstate")
+library("hesim")
+library("BCEA")
+library("ggplot2")
+library("scales")
+library("data.table")
+
+# Load Markov model function for rivaroxaban and warfarin
+source("function_markov.R")
+
+``` 
+
+One-way sensitivty analyses and Tornado diagrams
+- probability of off-treatment
+- costs
+- utilities
+
+```{r}
+
+## One-way sensitivity analysis
+
+# The probability of PE for the range 0.00 to 0.10
+p.PE_range <- seq(0.00, 0.10, by=0.01)
+p.PE_range
+
+pr.ne_ne   <- 0.856               # probability from no event to no event  
+pr.ne_vr   <- 0                   # probability from no event to VTE recurrence 
+pr.ne_mb   <- 0.019               # probability from no event to  major bleed 
+pr.ne_nmb  <- 0.125               # probability from no event to CRNMB
+pr.nmb_ot  <- 0.019               # probability from CNMB to come off treatment  
+pr.mb_ot   <- 1                   # probability from MB to come off treatment 
+
+# Generate matrix of inputs for decision tree
+input_matrix <- cbind(p.PE = p.PE_range, input[-1])
+input_matrix
+
+```
