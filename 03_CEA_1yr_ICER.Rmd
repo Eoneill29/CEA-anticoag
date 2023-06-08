@@ -13,7 +13,7 @@ rm(list = ls())
 library(here)
 library(tidyverse)
 
-# Load function
+# Load functions
 source(here::here("functions", "function_create-sa.R"))
 source(here::here("functions", "function_make-psa-obj.R"))
 source(here::here("functions", "function_summary-psa.R"))
@@ -69,6 +69,9 @@ Read-in MC simulation results for riv and war
 sim_results_war <- readRDS(here::here("output","results_1yr_war.rds"))
 sim_results_riv <- readRDS(here::here("output","results_1yr_riv.rds"))
 
+sim_results_war_param <- sim_results_war %>% select(v.cost, v.util, pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+sim_results_riv_param <- sim_results_riv %>% select(v.cost, v.util, pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+
 ```
 
 Calculate ICERs for MC simulations
@@ -83,6 +86,10 @@ sim_results_effectiveness <- data.frame(war = sim_results_war$te_hat,
 psa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_effectiveness, parameters = NULL,
                     strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
 
+# Save psa object
+saveRDS(psa, here::here("output","results_1yr_psa.rds"))
+
+# See mean ICER
 summary.psa(psa, calc_sds=TRUE)
 
 ```

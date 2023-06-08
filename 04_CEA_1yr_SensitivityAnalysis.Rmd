@@ -1,13 +1,9 @@
 ---
 title: "CEA anticoag"
 author: "Emily O'Neill, Andrew Huang"
-date: "2023-06-05"
+date: "2023-06-08"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ```{r} 
 ##Cost utility analysis of Rivaroxaban in the prevention of VTE reoccurrence versus standard or care with warfarin: A markov Model-Based Simulation  
@@ -16,20 +12,69 @@ knitr::opts_chunk$set(echo = TRUE)
 rm(list = ls()) 
 
 ##Install packages for Markov Model 
-library("heemod")
-library("diagram")
-library("flexsurv")
-library("mstate")
-library("hesim")
-library("BCEA")
-library("ggplot2")
-library("scales")
-library("data.table")
+library(here)
+library(tidyverse)
 
-# Load Markov model function for rivaroxaban and warfarin
-source("function_markov.R")
+# Load functions
+source(here::here("functions", "function_create-sa.R"))
+source(here::here("functions", "function_make-psa-obj.R"))
+source(here::here("functions", "function_summary-psa.R"))
+source(here::here("functions", "function_plot-psa.R"))
+source(here::here("functions", "function_owsa.R"))
+source(here::here("functions", "function_owsa-metamodel.R"))
 
 ``` 
+
+Read-in MC simulation results for riv and war
+
+```{r}
+
+sim_results_war <- readRDS(here::here("output","results_1yr_war.rds"))
+sim_results_riv <- readRDS(here::here("output","results_1yr_riv.rds"))
+
+param_war_cost <- as.data.frame(do.call(rbind, sim_results_war$v.cost))
+param_riv_cost <- as.data.frame(do.call(rbind, sim_results_riv$v.cost))
+names(param_war_cost) <- c("cost.ne_war", "cost.vr_war", "cost.mb_war", "cost.nmb_war", "cost.ot_war")
+names(param_riv_cost) <- c("cost.ne_riv", "cost.vr_riv", "cost.mb_riv", "cost.nmb_riv", "cost.ot_riv")
+
+param_war_util <- as.data.frame(do.call(rbind, sim_results_war$v.util))
+param_riv_util <- as.data.frame(do.call(rbind, sim_results_riv$v.util))
+names(param_war_util) <- c("util.ne_war", "util.vr_war", "util.mb_war", "util.nmb_war", "util.ot_war")
+names(param_riv_util) <- c("util.ne_riv", "util.vr_riv", "util.mb_riv", "util.nmb_riv", "util.ot_riv")
+
+param_war_prob <- sim_results_war %>% select(pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+param_riv_prob <- sim_results_riv %>% select(pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+names(param_war_prob) <- c("pr.ne_ne_war", "pr.ne_vr_war", "pr.ne_mb_war", "pr.ne_nmb_war", "pr.mb_ot_war", "pr.nmb_ot_war")
+names(param_riv_prob) <- c("pr.ne_ne_riv", "pr.ne_vr_riv", "pr.ne_mb_riv", "pr.ne_nmb_riv", "pr.mb_ot_riv", "pr.nmb_ot_riv")
+
+sim_results_param <- as.data.frame(cbind(param_war_cost,
+                                         param_riv_cost,
+                                         param_war_util,
+                                         param_riv_util,
+                                         param_war_prob,
+                                         param_riv_prob))
+
+sim_results_param
+
+```
+
+Get parameters of interest
+
+```{r}
+
+# Create and save psa object for owsa
+sim_results_cost <- data.frame(war = sim_results_war$tc_hat,
+                               riv = sim_results_riv$tc_hat)
+sim_results_effectiveness <- data.frame(war = sim_results_war$te_hat,
+                                        riv = sim_results_riv$te_hat)
+
+psa_owsa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_effectiveness, parameters = sim_results_param,
+                         strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
+
+# Save psa object
+saveRDS(psa_owsa, here::here("output","results_1yr_psa_owsa.rds"))
+
+```
 
 One-way sensitivty analyses and Tornado diagrams
 - probability of off-treatment
@@ -38,21 +83,7 @@ One-way sensitivty analyses and Tornado diagrams
 
 ```{r}
 
-## One-way sensitivity analysis
-
-# The probability of PE for the range 0.00 to 0.10
-p.PE_range <- seq(0.00, 0.10, by=0.01)
-p.PE_range
-
-pr.ne_ne   <- 0.856               # probability from no event to no event  
-pr.ne_vr   <- 0                   # probability from no event to VTE recurrence 
-pr.ne_mb   <- 0.019               # probability from no event to  major bleed 
-pr.ne_nmb  <- 0.125               # probability from no event to CRNMB
-pr.nmb_ot  <- 0.019               # probability from CNMB to come off treatment  
-pr.mb_ot   <- 1                   # probability from MB to come off treatment 
-
-# Generate matrix of inputs for decision tree
-input_matrix <- cbind(p.PE = p.PE_range, input[-1])
-input_matrix
+owsa <- owsa(psa_owsa)
+owsa_tornado(owsa)
 
 ```
