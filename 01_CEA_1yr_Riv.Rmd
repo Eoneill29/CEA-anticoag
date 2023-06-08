@@ -17,8 +17,8 @@ library(ggplot2)
 library(gridExtra)
 
 # Load Markov model function for both rivaroxaban and warfarin
-source("function_markov.R")
-source("function_plot-trace.R")
+source(here::here("functions", "function_markov.R"))
+source(here::here("functions", "function_plot-trace.R"))
 
 ``` 
 
@@ -122,11 +122,11 @@ set.seed(123)
 ##Rivaroxaban
 #Health States 
 #Event rates per person-6months converted to person-year:
-sample_r.ne_vr   <- rgamma(n_samples, shape = 20, rate = 10000) * 2       # rate of no event to VTE recurrence 
-sample_r.ne_mb   <- rgamma(n_samples, shape = 84, rate = 716 + 84) * 2    # rate of no event to  major bleed 
-sample_r.ne_nmb  <- rgamma(n_samples, shape = 30, rate = 170 + 30) * 2    # rate of no event to CRNMB
-sample_r.nmb_ot  <- runif(n_samples, min = 0, max = 0.20) * 2             # rate of CNMB to come off treatment  
-sample_r.mb_ot   <- runif(n_samples, min = 0, max = 0.20) * 2             # rate of MB to come off treatment 
+sample_r.ne_vr   <- runif(n_samples, min = 0, max = 0.000 + 0.50) * 2   # rate of no event to VTE recurrence 
+sample_r.ne_mb   <- runif(n_samples, min = 0, max = 0.019 + 0.05) * 2   # rate of no event to  major bleed 
+sample_r.ne_nmb  <- runif(n_samples, min = 0, max = 0.125 + 0.05) * 2   # rate of no event to CRNMB
+sample_r.nmb_ot  <- runif(n_samples, min = 0, max = 0.20) * 2   # rate of CNMB to come off treatment  
+sample_r.mb_ot   <- runif(n_samples, min = 0, max = 0.20) * 2   # rate of MB to come off treatment 
 
 #Transition probabilities (per month cycle): 
 sample_pr.ne_vr   <- 1 - exp(-sample_r.ne_vr * cycle_length)        # from no event to VTE recurrence 

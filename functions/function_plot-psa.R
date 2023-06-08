@@ -1,5 +1,6 @@
 #' Plot the psa object
 #'
+#' Source: DARTH (https://github.com/DARTH-git/cohort-modeling-tutorial-intro/)
 #' @param x the psa object
 #' @param center plot the mean cost and effectiveness for each strategy. defaults to TRUE
 #' @param ellipse plot an ellipse around each strategy. defaults to TRUE
@@ -86,11 +87,11 @@ plot.psa <- function(x,
                                      size = 1, linetype = 2, alpha = 1)
   }
   
-  # add common theme
-  col <- match.arg(col)
-  add_common_aes(psa_plot, txtsize, col = col, col_aes = c("color", "fill"),
-                 continuous = c("x", "y"),
-                 n_x_ticks = n_x_ticks, n_y_ticks = n_y_ticks,
-                 xbreaks = xbreaks, ybreaks = ybreaks,
-                 xlim = xlim, ylim = ylim)
+  # # add common theme
+  # col <- match.arg(col)
+  # add_common_aes(psa_plot, txtsize, col = col, col_aes = c("color", "fill"),
+  #                continuous = c("x", "y"),
+  #                n_x_ticks = n_x_ticks, n_y_ticks = n_y_ticks,
+  #                xbreaks = xbreaks, ybreaks = ybreaks,
+  #                xlim = xlim, ylim = ylim)
 }

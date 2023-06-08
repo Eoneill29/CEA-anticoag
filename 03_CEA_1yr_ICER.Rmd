@@ -11,10 +11,13 @@ rm(list = ls())
 
 ##Install packages for Markov Model
 library(here)
-library(dplyr)
+library(tidyverse)
 
 # Load function
-source("function_plot-psa.R")
+source(here::here("functions", "function_create-sa.R"))
+source(here::here("functions", "function_make-psa-obj.R"))
+source(here::here("functions", "function_summary-psa.R"))
+source(here::here("functions", "function_plot-psa.R"))
 
 ``` 
 
@@ -27,7 +30,7 @@ sim_results_riv_noMC <- readRDS(here::here("output","results_1yr_riv_noMC.rds"))
 
 ```
 
-Calculate ICER from point estimates
+Calculate ICER for base case
 
 ```{r} 
 ###CEA 
@@ -66,30 +69,21 @@ Read-in MC simulation results for riv and war
 sim_results_war <- readRDS(here::here("output","results_1yr_war.rds"))
 sim_results_riv <- readRDS(here::here("output","results_1yr_riv.rds"))
 
-sim_results_war <- sim_results_war %>%
-  rename(tc_hatw = tc_hat) %>%
-  rename(te_hatw = te_hat)
-
-sim_results_riv <- sim_results_riv %>%
-  rename(tc_hatr = tc_hat) %>%
-  rename(te_hatr = te_hat)
-
 ```
 
-Combine and compute ICERs
+Calculate ICERs for MC simulations
 
 ```{r}
 
-sim_results <- inner_join(sim_results_war %>% select(nsim, tc_hatw, te_hatw),
-                          sim_results_riv %>% select(nsim, tc_hatr, te_hatr),
-                          by="nsim")
+sim_results_cost <- data.frame(war = sim_results_war$tc_hat,
+                               riv = sim_results_riv$tc_hat)
+sim_results_effectiveness <- data.frame(war = sim_results_war$te_hat,
+                                        riv = sim_results_riv$te_hat)
 
-sim_results <- sim_results %>%
-  mutate(delta.c = tc_hatr - tc_hatw,
-         delta.e = te_hatr - te_hatw,
-         icer = delta.c/delta.e)
+psa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_effectiveness, parameters = NULL,
+                    strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
 
-summary(sim_results)
+summary.psa(psa, calc_sds=TRUE)
 
 ```
 
@@ -97,11 +91,11 @@ Distribution of ICER estimates
 
 ```{r}
 
-# plot.psa(l_psa) +
-#   ggthemes::scale_color_colorblind() +
-#   ggthemes::scale_fill_colorblind() +
-#   xlab("Effectiveness (QALYs)") +
-#   guides(col = guide_legend(nrow = 2)) +
-#   theme(legend.position = "bottom")
+plot.psa(psa) +
+  ggthemes::scale_color_colorblind() +
+  ggthemes::scale_fill_colorblind() +
+  xlab("Effectiveness (QALYs)") +
+  guides(col = guide_legend(nrow = 2)) +
+  theme(legend.position = "right")
 
 ```
