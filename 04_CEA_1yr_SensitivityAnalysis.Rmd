@@ -76,10 +76,11 @@ saveRDS(psa_owsa, here::here("output","results_1yr_psa_owsa.rds"))
 
 ```
 
-One-way sensitivty analyses and Tornado diagrams
-- probability of off-treatment
+Deterministic One-way sensitivty analyses and Tornado diagrams
 - costs
 - utilities
+- discount rate
+- probability of off-treatment
 
 ```{r}
 

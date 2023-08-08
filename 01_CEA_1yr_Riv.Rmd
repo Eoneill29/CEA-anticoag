@@ -40,7 +40,7 @@ d.c   <- d.e <- 0.05 / (1/cycle_length)           # discounting of costs and QAL
 #(5) Off Treatment = OT 
 
 v.n   <- c("NE", "VR", "MB", "NMB", "OT")         # Model states  
-v.M_1 <- c(1, 0, 0, 0, 0)                         # Everyone begins in index event
+v.M_1 <- c(1, 0, 0, 0, 0)                         # Everyone begins in no event state
 
 ``` 
 
@@ -67,10 +67,10 @@ pr.mb_ot   <- 1 - exp(-r.mb_ot * cycle_length)        # from MB to come off trea
 
 ##Costs (per month cycle (year/12))
 c.ne      <- 142  / 12                #Cost for staying healthy in rivaroxaban arm
-c.vr      <- 215  / 12                #Cost for VTE recurrence in Rivaroxaban arm ($73) 
-c.mb      <- 490  / 12                #Cost for major bleed in Rivaroxaban arm ($348)
-c.nmb     <- 304  / 12                #Cost for CRNMB in Rivaroxaban arm ($162)
-c.ot      <- 0    / 12                #Cost of off treatment
+c.vr      <- 215  / 12                #Cost for VTE recurrence in Rivaroxaban arm ($215 annually) 
+c.mb      <- 490  / 12                #Cost for major bleed in Rivaroxaban arm ($490 annually)
+c.nmb     <- 304  / 12                #Cost for CRNMB in Rivaroxaban arm ($304 annually)
+c.ot      <- 0    / 12                #Cost of off treatment ($0 annually)
 
 ##Utility Values
 u.ne    <- 0.825               #Utility of No Event
