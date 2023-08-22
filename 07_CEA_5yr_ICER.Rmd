@@ -1,0 +1,108 @@
+---
+title: "CEA anticoag"
+author: "Emily O'Neill, Andrew Huang"
+date: "2023-06-08"
+output: html_document
+---
+
+```{r} 
+##remove any variables in R's Memory 
+rm(list = ls()) 
+
+##Install packages for Markov Model
+library(here)
+library(tidyverse)
+
+# Load functions
+source(here::here("functions", "function_create-sa.R"))
+source(here::here("functions", "function_make-psa-obj.R"))
+source(here::here("functions", "function_summary-psa.R"))
+source(here::here("functions", "function_plot-psa.R"))
+
+``` 
+
+Read-in base case results for riv and war
+
+```{r}
+
+sim_results_war_noMC <- readRDS(here::here("output","results_5yr_war_noMC.rds"))
+sim_results_riv_noMC <- readRDS(here::here("output","results_5yr_riv_noMC.rds"))
+
+```
+
+Calculate ICER for base case
+
+```{r} 
+###CEA 
+
+##Store the estimated cost of each medication 
+v.c <- c(sim_results_war_noMC$tc_hat, 
+         sim_results_riv_noMC$tc_hat)
+##store the estimated QALY of each medication  
+v.e <- c(sim_results_war_noMC$te_hat, 
+         sim_results_riv_noMC$te_hat)
+
+
+## ICER ##
+delta.c <- v.c[2] - v.c[1]            # calculate incremental costs between rivaroxaban and warfarin 
+delta.e <- v.e[2] - v.e[1]            # calculate incremental QALYs between rivaroxaban and warfarin
+ICER <- delta.c / delta.e             # calculate the ICER
+results <- c(delta.c, delta.e, ICER)  # store the values in a new variable
+
+# Create full incremental cost-effectiveness analysis table
+table_markov <- data.frame(
+  round(v.c, 0),              # costs per arm
+  round(v.e, 4),              # health outcomes per arm
+  c("", round(delta.c, 0)),   # incremental costs
+  c("", round(delta.e, 4)),   # incremental QALYs
+  c("", round(ICER, 0))       # ICER
+)
+rownames(table_markov) = c("Warfarin", "Rivaroxaban")  # name the rows
+colnames(table_markov) = c("Costs", "QALYs","Incremental Costs", "QALYs Gained", "ICER") # name the columns
+table_markov                    # print the table 
+```
+
+Read-in MC simulation results for riv and war
+
+```{r}
+
+sim_results_war <- readRDS(here::here("output","results_5yr_war.rds"))
+sim_results_riv <- readRDS(here::here("output","results_5yr_riv.rds"))
+
+sim_results_war_param <- sim_results_war %>% select(v.cost, v.util, pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+sim_results_riv_param <- sim_results_riv %>% select(v.cost, v.util, pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot)
+
+```
+
+Calculate ICERs for MC simulations
+
+```{r}
+
+sim_results_cost <- data.frame(war = sim_results_war$tc_hat,
+                               riv = sim_results_riv$tc_hat)
+sim_results_effectiveness <- data.frame(war = sim_results_war$te_hat,
+                                        riv = sim_results_riv$te_hat)
+
+psa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_effectiveness, parameters = NULL,
+                    strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
+
+# Save psa object
+saveRDS(psa, here::here("output","results_5yr_psa.rds"))
+
+# See mean ICER
+summary.psa(psa, calc_sds=TRUE)
+
+```
+
+Distribution of ICER estimates
+
+```{r}
+
+plot.psa(psa) +
+  ggthemes::scale_color_colorblind() +
+  ggthemes::scale_fill_colorblind() +
+  xlab("Effectiveness (QALYs)") +
+  guides(col = guide_legend(nrow = 2)) +
+  theme(legend.position = "right")
+
+```
