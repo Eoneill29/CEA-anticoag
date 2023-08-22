@@ -77,7 +77,7 @@ u.ne    <- 0.825               #Utility of No Event
 u.vr    <- 0.76                #Utility of recurrence  
 u.mb    <- 0.61                #Utility of major bleed
 u.nmb   <- 0.65                #Utility of CRNMB 
-u.ot    <- 0.59                #Utility of off treatment 
+u.ot    <- 0.68                #Utility of off treatment 
 
 ##Vectors for cost and utility values 
 v.cost <- c(c.ne, c.vr, c.mb, c.nmb, c.ot)

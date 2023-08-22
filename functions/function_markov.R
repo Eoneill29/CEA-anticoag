@@ -14,7 +14,8 @@
 #' 4. total discounted utility (te_hat)
 
 Markov <- function(n.t, d.c, d.e, v.n, v.cost, v.util, v.M_1, 
-                   pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot) {  
+                   pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, pr.mb_ot, pr.nmb_ot,
+                   pr.ot_vr=NULL) {  
   ##Extract parameter values for state transition probabilities
   pr.ne_ne  <- pr.ne_ne
   pr.ne_vr  <- pr.ne_vr
@@ -25,12 +26,21 @@ Markov <- function(n.t, d.c, d.e, v.n, v.cost, v.util, v.M_1,
   pr.nmb_ot  <- pr.nmb_ot
   pr.nmb_nmb  <- 1 - pr.nmb_ot
   
+  if(is.null(pr.ot_vr)) {
+    pr.ot_vr <- 0
+    pr.ot_ot <- 1-pr.ot_vr
+  }
+  else{
+    pr.ot_vr <- pr.ot_vr
+    pr.ot_ot <- 1-pr.ot_vr
+  }
+  
   ##Create transition probability matrix  
   t.probr <- matrix(c(pr.ne_ne, pr.ne_vr, pr.ne_mb, pr.ne_nmb, 0, 
                       0, 1, 0, 0, 0, 
                       0, 0, pr.mb_mb, 0, pr.mb_ot, 
                       0, 0, 0, pr.nmb_nmb, pr.nmb_ot, 
-                      0, 0, 0, 0, 1), 
+                      0, pr.ot_vr, 0, 0, pr.ot_ot), 
                     nrow = length(v.n), ncol = length(v.n), byrow = T, 
                     dimnames = list (v.n, v.n)) 
   #print(t.probr)

@@ -1,0 +1,246 @@
+---
+title: "Sensitivity - discount rates"
+author: "Emily O'Neill, Andrew Huang"
+date: "2023-08-21"
+output: html_document
+---
+
+Testing ICER sensitivity to Cost ranges
+
+Setup
+
+```{r} 
+##Cost utility analysis of Rivaroxaban in the prevention of VTE reoccurrence versus standard or care with warfarin: A markov Model-Based Simulation  
+
+##remove any variables in R's Memory 
+rm(list = ls()) 
+
+##Install packages for Markov Model 
+library(here)
+library(tidyverse)
+
+# Load functions
+source(here::here("functions", "function_markov.R"))
+source(here::here("functions", "function_plot-trace.R"))
+source(here::here("functions", "function_create-sa.R"))
+source(here::here("functions", "function_make-psa-obj.R"))
+source(here::here("functions", "function_summary-psa.R"))
+source(here::here("functions", "function_plot-psa.R"))
+
+``` 
+
+Set Parameters with Base Case values
+
+```{r}
+### Hyperparameters
+cycle_length <- 1/12                              # cycle length equals 1 month
+n.t   <- 12                                       # number of cycles, time horizon equals 1 year 
+d.c   <- d.e <- 0.05 / (1/cycle_length)           # discounting of costs and QALYs, annual rate = 5%
+v.n   <- c("NE", "VR", "MB", "NMB", "OT")         # Model states  
+v.M_1 <- c(1, 0, 0, 0, 0)                         # Everyone begins in no event state
+
+#' @param v.util is a numeric vector containing utility values for each state
+##Rivaroxaban Values 
+riv.u.ne    <- 0.825               #Utility of No Event
+riv.u.vr    <- 0.76                #Utility of recurrence  
+riv.u.mb    <- 0.61                #Utility of major bleed
+riv.u.nmb   <- 0.65                #Utility of CRNMB 
+riv.u.ot    <- 0.59                #Utility of off treatment 
+##Warfarin Values 
+war.u.ne    <- 0.825               #Utility of No Event
+war.u.vr    <- 0.76                #Utility of recurrence  
+war.u.mb    <- 0.61                #Utility of major bleed
+war.u.nmb   <- 0.65                #Utility of CRNMB 
+war.u.ot    <- 0.59                #Utility of off treatment
+##Vectors for utility values 
+riv.v.util <- c(riv.u.ne, riv.u.vr, riv.u.mb, riv.u.nmb, riv.u.ot)
+war.v.util <- c(war.u.ne, war.u.vr, war.u.mb, war.u.nmb, war.u.ot)
+
+#' @param pr._ represent parameter values for state transition probabilities
+## Rivaroxaban Values
+#Event rates per person-6months converted to person-year:
+riv.r.ne_vr   <- 0.000 * 2               # rate of no event to VTE recurrence 
+riv.r.ne_mb   <- 0.019 * 2               # rate of no event to  major bleed 
+riv.r.ne_nmb  <- 0.125 * 2               # rate of no event to CRNMB
+riv.r.nmb_ot  <- 0.100 * 2               # rate of CNMB to come off treatment  
+riv.r.mb_ot   <- 0.100 * 2               # rate of MB to come off treatment 
+#Transition probabilities (per month cycle): 
+riv.pr.ne_vr   <- 1 - exp(-riv.r.ne_vr * cycle_length)        # from no event to VTE recurrence 
+riv.pr.ne_mb   <- 1 - exp(-riv.r.ne_mb * cycle_length)        # from no event to  major bleed 
+riv.pr.ne_nmb  <- 1 - exp(-riv.r.ne_nmb * cycle_length)       # from no event to CRNMB
+riv.pr.ne_ne   <- 1 - sum(riv.pr.ne_vr, riv.pr.ne_mb, riv.pr.ne_nmb)  # from no event to no event  
+riv.pr.nmb_ot  <- 1 - exp(-riv.r.nmb_ot * cycle_length)       # from CNMB to come off treatment  
+riv.pr.mb_ot   <- 1 - exp(-riv.r.mb_ot * cycle_length)        # from MB to come off treatment
+## Warfarin Values
+#Event rates per person-6months converted to person-year:
+war.r.ne_vr   <- 0.026 * 2               # rate of no event to VTE recurrence 
+war.r.ne_mb   <- 0.008 * 2               # rate of no event to  major bleed 
+war.r.ne_nmb  <- 0.308 * 2               # rate of no event to CRNMB
+war.r.nmb_ot  <- 0.100 * 2               # rate of CNMB to come off treatment  
+war.r.mb_ot   <- 0.100 * 2               # rate of MB to come off treatment 
+#Transition probabilities (per month cycle): 
+war.pr.ne_vr   <- 1 - exp(-war.r.ne_vr * cycle_length)        # from no event to VTE recurrence 
+war.pr.ne_mb   <- 1 - exp(-war.r.ne_mb * cycle_length)        # from no event to  major bleed 
+war.pr.ne_nmb  <- 1 - exp(-war.r.ne_nmb * cycle_length)       # from no event to CRNMB
+war.pr.ne_ne   <- 1 - sum(war.pr.ne_vr, war.pr.ne_mb, war.pr.ne_nmb)  # from no event to no event  
+war.pr.nmb_ot  <- 1 - exp(-war.r.nmb_ot * cycle_length)       # from CNMB to come off treatment  
+war.pr.mb_ot   <- 1 - exp(-war.r.mb_ot * cycle_length)        # from MB to come off treatment  
+
+```
+
+Set Parameter with Sensitivity values
+
+```{r}
+
+### Parameter with Sensitivity values
+#' @param v.cost is a numeric vector containing cost values for each state
+##Rivaroxaban Costs (per 6 months (year/2))
+riv.c.ne      <- c(76, 142, 208)  / 12    #Cost for staying healthy in rivaroxaban arm
+riv.c.vr      <- c(207, 215, 305)  / 12   #Cost for VTE recurrence in Rivaroxaban arm ($215 annually) 
+riv.c.mb      <- c(283, 490, 50807)  / 12 #Cost for major bleed in Rivaroxaban arm ($490 annually)
+riv.c.nmb     <- c(283, 304, 25326)  / 12         #Cost for CRNMB in Rivaroxaban arm ($304 annually)
+riv.c.ot      <- c(0, 215)    / 12                #Cost of off treatment ($0 annually)
+##Warfarin Costs (per 6 months (year/2))
+war.c.ne      <- c(74, 165, 295)  / 12       #Cost for staying healthy in Warfarin arm ($165 annually)
+war.c.vr      <- c(254, 267, 343)  / 12      #Cost for VTE recurrence in Warfarin arm ($267 annually)  
+war.c.mb      <- c(401, 435, 795)  / 12      #Cost for major bleed in Warfarin arm ($435 annually)
+war.c.nmb     <- c(310, 332, 401) / 12              #Cost for CRNMB in Warfarin arm ($332 annually)
+war.c.ot      <- c(0, 267)    / 12              #Cost of off treatment ($0 annually)
+
+##Vectors for cost values
+riv.df.cost <- expand.grid(riv.c.ne, riv.c.vr, riv.c.mb, riv.c.nmb, riv.c.ot)
+war.df.cost <- expand.grid(war.c.ne, war.c.vr, war.c.mb, war.c.nmb, war.c.ot)
+
+n_samples <- nrow(riv.df.cost)
+riv.v.cost <- list()
+war.v.cost <- list()
+
+for (i in 1:n_samples) {
+  riv.v.cost[[i]] = unlist(riv.df.cost[i, ], use.names=F)
+  war.v.cost[[i]] = unlist(war.df.cost[i, ], use.names=F)
+}
+
+```
+
+Generate params
+
+```{r}
+
+## Generate an input dataframe containing parameters for each simulation
+riv.input_params <- as.data.frame(cbind(nsim = as.character(seq(1, n_samples)),
+                                        n.t = as.numeric(rep(n.t, n_samples)),
+                                        d.c = as.numeric(rep(d.c, n_samples)),
+                                        d.e = as.numeric(rep(d.e, n_samples)),
+                                        v.n = rep(list(v.n), n_samples),
+                                        v.cost = riv.v.cost,  ### SENS
+                                        v.util = rep(list(riv.v.util), n_samples),
+                                        v.M_1 = rep(list(v.M_1), n_samples),
+                                        pr.ne_ne = as.numeric(riv.pr.ne_ne),
+                                        pr.ne_vr = as.numeric(riv.pr.ne_vr),
+                                        pr.ne_mb = as.numeric(riv.pr.ne_mb),
+                                        pr.ne_nmb = as.numeric(riv.pr.ne_nmb),
+                                        pr.mb_ot = as.numeric(riv.pr.mb_ot),
+                                        pr.nmb_ot = as.numeric(riv.pr.nmb_ot)))
+
+war.input_params <- as.data.frame(cbind(nsim = as.character(seq(1, n_samples)),
+                                        n.t = as.numeric(rep(n.t, n_samples)),
+                                        d.c = as.numeric(rep(d.c, n_samples)),
+                                        d.e = as.numeric(rep(d.e, n_samples)),
+                                        v.n = rep(list(v.n), n_samples),
+                                        v.cost = war.v.cost,  ### SENS
+                                        v.util = rep(list(war.v.util), n_samples),
+                                        v.M_1 = rep(list(v.M_1), n_samples),
+                                        pr.ne_ne = as.numeric(war.pr.ne_ne),
+                                        pr.ne_vr = as.numeric(war.pr.ne_vr),
+                                        pr.ne_mb = as.numeric(war.pr.ne_mb),
+                                        pr.ne_nmb = as.numeric(war.pr.ne_nmb),
+                                        pr.mb_ot = as.numeric(war.pr.mb_ot),
+                                        pr.nmb_ot = as.numeric(war.pr.nmb_ot)))
+
+```
+
+Run Markov models on sensitivity values
+
+```{r}
+
+### Riv
+#Initialize dataframe to store results
+sim_results_riv <- data.frame(nsim = as.character(seq(1:n_samples)))
+  
+for (i in 1:n_samples){
+  sim_markov_riv <- Markov(n.t = riv.input_params$n.t[[i]], 
+                           d.c = riv.input_params$d.c[[i]],  
+                           d.e = riv.input_params$d.e[[i]],  
+                           v.n = riv.input_params$v.n[[i]],  
+                           v.cost = riv.input_params$v.cost[[i]],  
+                           v.util = riv.input_params$v.util[[i]],  
+                           v.M_1 = riv.input_params$v.M_1[[i]],  
+                           pr.ne_ne = riv.input_params$pr.ne_ne[[i]],  
+                           pr.ne_vr = riv.input_params$pr.ne_vr[[i]],  
+                           pr.ne_mb = riv.input_params$pr.ne_mb[[i]],  
+                           pr.ne_nmb = riv.input_params$pr.ne_nmb[[i]],  
+                           pr.mb_ot = riv.input_params$pr.mb_ot[[i]],  
+                           pr.nmb_ot = riv.input_params$pr.nmb_ot[[i]])
+  sim_results_riv$trace[i] <- list(sim_markov_riv$m.TRr)
+  sim_results_riv$tc_hat[i] <- sim_markov_riv$tc_hat
+  sim_results_riv$te_hat[i] <- sim_markov_riv$te_hat
+}
+
+### War
+#Initialize dataframe to store results
+sim_results_war <- data.frame(nsim = as.character(seq(1:n_samples)))
+  
+for (i in 1:n_samples){
+  sim_markov_war <- Markov(n.t = war.input_params$n.t[[i]], 
+                           d.c = war.input_params$d.c[[i]],  
+                           d.e = war.input_params$d.e[[i]],  
+                           v.n = war.input_params$v.n[[i]],  
+                           v.cost = war.input_params$v.cost[[i]],  
+                           v.util = war.input_params$v.util[[i]],  
+                           v.M_1 = war.input_params$v.M_1[[i]],  
+                           pr.ne_ne = war.input_params$pr.ne_ne[[i]],  
+                           pr.ne_vr = war.input_params$pr.ne_vr[[i]],  
+                           pr.ne_mb = war.input_params$pr.ne_mb[[i]],  
+                           pr.ne_nmb = war.input_params$pr.ne_nmb[[i]],  
+                           pr.mb_ot = war.input_params$pr.mb_ot[[i]],  
+                           pr.nmb_ot = war.input_params$pr.nmb_ot[[i]])
+  sim_results_war$trace[i] <- list(sim_markov_war$m.TRr)
+  sim_results_war$tc_hat[i] <- sim_markov_war$tc_hat
+  sim_results_war$te_hat[i] <- sim_markov_war$te_hat
+}
+
+```
+
+Calculate ICERs
+
+```{r}
+
+sim_results_cost <- data.frame(war = sim_results_war$tc_hat,
+                               riv = sim_results_riv$tc_hat)
+sim_results_effectiveness <- data.frame(war = sim_results_war$te_hat,
+                                        riv = sim_results_riv$te_hat)
+
+psa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_effectiveness, parameters = NULL,
+                    strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
+
+# Save psa object
+saveRDS(psa, here::here("output","results_1yr_sens_04b_Costs.rds"))
+
+# See mean ICER
+summary.psa(psa, calc_sds=TRUE)
+
+```
+
+Distribution of ICER estimates
+
+```{r}
+
+plot.psa(psa) +
+  ggthemes::scale_color_colorblind() +
+  ggthemes::scale_fill_colorblind() +
+  xlab("Effectiveness (QALYs)") +
+  guides(col = guide_legend(nrow = 2)) +
+  theme(legend.position = "right")
+
+```
+

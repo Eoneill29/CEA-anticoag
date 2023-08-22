@@ -1,7 +1,7 @@
 ---
 title: "CEA anticoag"
 author: "Emily O'Neill, Andrew Huang"
-date: "2023-06-08"
+date: "2023-08-21"
 output: html_document
 ---
 
@@ -72,15 +72,11 @@ psa_owsa <- make_psa_obj(cost = sim_results_cost, effectiveness = sim_results_ef
                          strategies = c("Warfarin", "Rivaroxaban"), currency = "$", other_outcome = NULL)
 
 # Save psa object
-saveRDS(psa_owsa, here::here("output","results_1yr_psa_owsa.rds"))
+saveRDS(psa_owsa, here::here("output","results_1yr_sens_04e_TornadoPlot.rds"))
 
 ```
 
-Deterministic One-way sensitivty analyses and Tornado diagrams
-- costs
-- utilities
-- discount rate
-- probability of off-treatment
+Tornado diagrams
 
 ```{r}
 
