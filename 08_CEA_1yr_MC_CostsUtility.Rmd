@@ -167,15 +167,15 @@ Set MC draws for utility parameters: logit distributions
 
 ##Rivaroxaban Values 
 riv.u.ne    <- rlogis(n_samples, location=0.825, scale=0.02)  #Utility of No Event
-riv.u.vr    <- rlogis(n_samples, location=0.597603264, scale=0.063774925)  #Utility of recurrence  
-riv.u.mb    <- rlogis(n_samples, location=0.381885324, scale=0.274593292)  #Utility of major bleed
-riv.u.nmb   <- rlogis(n_samples, location=0.500191606, scale=0.115559069)  #Utility of CRNMB 
+riv.u.vr    <- rlogis(n_samples, location=0.76, scale=0.063774925)  #Utility of recurrence  
+riv.u.mb    <- rlogis(n_samples, location=0.61, scale=0.274593292)  #Utility of major bleed
+riv.u.nmb   <- rlogis(n_samples, location=0.65, scale=0.115559069)  #Utility of CRNMB 
 riv.u.ot    <- rlogis(n_samples, location=0.68, scale=0.063774925)  #Utility of off treatment 
 ##Warfarin Values 
 war.u.ne    <- rlogis(n_samples, location=0.825, scale=0.02)  #Utility of No Event
-war.u.vr    <- rlogis(n_samples, location=0.597603264, scale=0.063774925)  #Utility of recurrence  
-war.u.mb    <- rlogis(n_samples, location=0.381885324, scale=0.274593292)  #Utility of major bleed
-war.u.nmb   <- rlogis(n_samples, location=0.500191606, scale=0.115559069)  #Utility of CRNMB 
+war.u.vr    <- rlogis(n_samples, location=0.76, scale=0.063774925)  #Utility of recurrence  
+war.u.mb    <- rlogis(n_samples, location=0.61, scale=0.274593292)  #Utility of major bleed
+war.u.nmb   <- rlogis(n_samples, location=0.65, scale=0.115559069)  #Utility of CRNMB 
 war.u.ot    <- rlogis(n_samples, location=0.68, scale=0.063774925)  #Utility of off treatment 
 
 ##Vectors for utility values
