@@ -314,3 +314,15 @@ plot.psa(psa) +
   theme(legend.position = "right")
 
 ```
+
+Worst CERs (highest cost / lowest effectiveness)
+
+```{r}
+data.frame(
+  Strategy = c("Warfarin", "Rivaroxaban"),
+  max_cost = c(max(psa$cost$Warfarin), max(psa$cost$Rivaroxaban)),
+  min_effectiveness = c(min(psa$effectiveness$Warfarin), min(psa$effectiveness$Rivaroxaban)),
+  worst_CER = c(max(psa$cost$Warfarin)/min(psa$effectiveness$Warfarin),
+                max(psa$cost$Rivaroxaban)/min(psa$effectiveness$Rivaroxaban))
+)
+```
