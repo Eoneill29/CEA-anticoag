@@ -244,3 +244,246 @@ plot.psa(psa) +
 
 ```
 
+Create df for tornado plot
+```{r}
+# Rivaroxaban
+riv_df <- data.frame(
+  cbind(
+    riv.df.cost,
+    sim_results_cost$riv,
+    sim_results_effectiveness$riv
+  )
+) 
+riv_df <- riv_df %>%
+  mutate(CER = sim_results_cost.riv / sim_results_effectiveness.riv)
+riv_df_base <- riv_df %>%
+  filter(Var1 == riv.c.ne[2],
+         Var2 == riv.c.vr[2],
+         Var3 == riv.c.mb[2],
+         Var4 == riv.c.nmb[2],
+         Var5 == riv.c.ot[1]) %>%
+  mutate(Parameter = "Base",
+         ParamTest = "Base")
+riv_df_1 <- riv_df %>%
+  filter(Var1 != riv.c.ne[2],
+         Var2 == riv.c.vr[2],
+         Var3 == riv.c.mb[2],
+         Var4 == riv.c.nmb[2],
+         Var5 == riv.c.ot[1]) %>%
+  mutate(Parameter = c("riv.c.ne", "riv.c.ne"),
+         ParamTest = c("LowerBound", "UpperBound"))
+riv_df_2 <- riv_df %>%
+  filter(Var1 == riv.c.ne[2],
+         Var2 != riv.c.vr[2],
+         Var3 == riv.c.mb[2],
+         Var4 == riv.c.nmb[2],
+         Var5 == riv.c.ot[1]) %>%
+  mutate(Parameter = c("riv.c.vr", "riv.c.vr"),
+         ParamTest = c("LowerBound", "UpperBound"))
+riv_df_3 <- riv_df %>%
+  filter(Var1 == riv.c.ne[2],
+         Var2 == riv.c.vr[2],
+         Var3 != riv.c.mb[2],
+         Var4 == riv.c.nmb[2],
+         Var5 == riv.c.ot[1]) %>%
+  mutate(Parameter = c("riv.c.mb", "riv.c.mb"),
+         ParamTest = c("LowerBound", "UpperBound"))
+riv_df_4 <- riv_df %>%
+  filter(Var1 == riv.c.ne[2],
+         Var2 == riv.c.vr[2],
+         Var3 == riv.c.mb[2],
+         Var4 != riv.c.nmb[2],
+         Var5 == riv.c.ot[1]) %>%
+  mutate(Parameter = c("riv.c.nmb", "riv.c.nmb"),
+         ParamTest = c("LowerBound", "UpperBound"))
+riv_df_5 <- riv_df %>%
+  filter(Var1 == riv.c.ne[2],
+         Var2 == riv.c.vr[2],
+         Var3 == riv.c.mb[2],
+         Var4 == riv.c.nmb[2]) %>%
+  mutate(Parameter = c("riv.c.ot", "riv.c.ot"),
+         ParamTest = c("LowerBound", "UpperBound"))
+riv_tornado <- rbind(riv_df_base,
+                     riv_df_1,
+                     riv_df_2,
+                     riv_df_3,
+                     riv_df_4,
+                     riv_df_5)
+# Save tornado data
+saveRDS(riv_tornado, here::here("output","df_tornado_riv_costs.rds"))
+```
+
+```{r}
+# Warfarin
+war_df <- data.frame(
+  cbind(
+    war.df.cost,
+    sim_results_cost$war,
+    sim_results_effectiveness$war
+  )
+) 
+war_df <- war_df %>%
+  mutate(CER = sim_results_cost.war / sim_results_effectiveness.war)
+war_df_base <- war_df %>%
+  filter(Var1 == war.c.ne[2],
+         Var2 == war.c.vr[2],
+         Var3 == war.c.mb[2],
+         Var4 == war.c.nmb[2],
+         Var5 == war.c.ot[1]) %>%
+  mutate(Parameter = "Base",
+         ParamTest = "Base")
+war_df_1 <- war_df %>%
+  filter(Var1 != war.c.ne[2],
+         Var2 == war.c.vr[2],
+         Var3 == war.c.mb[2],
+         Var4 == war.c.nmb[2],
+         Var5 == war.c.ot[1]) %>%
+  mutate(Parameter = c("war.c.ne", "war.c.ne"),
+         ParamTest = c("LowerBound", "UpperBound"))
+war_df_2 <- war_df %>%
+  filter(Var1 == war.c.ne[2],
+         Var2 != war.c.vr[2],
+         Var3 == war.c.mb[2],
+         Var4 == war.c.nmb[2],
+         Var5 == war.c.ot[1]) %>%
+  mutate(Parameter = c("war.c.vr", "war.c.vr"),
+         ParamTest = c("LowerBound", "UpperBound"))
+war_df_3 <- war_df %>%
+  filter(Var1 == war.c.ne[2],
+         Var2 == war.c.vr[2],
+         Var3 != war.c.mb[2],
+         Var4 == war.c.nmb[2],
+         Var5 == war.c.ot[1]) %>%
+  mutate(Parameter = c("war.c.mb", "war.c.mb"),
+         ParamTest = c("LowerBound", "UpperBound"))
+war_df_4 <- war_df %>%
+  filter(Var1 == war.c.ne[2],
+         Var2 == war.c.vr[2],
+         Var3 == war.c.mb[2],
+         Var4 != war.c.nmb[2],
+         Var5 == war.c.ot[1]) %>%
+  mutate(Parameter = c("war.c.nmb", "war.c.nmb"),
+         ParamTest = c("LowerBound", "UpperBound"))
+war_df_5 <- war_df %>%
+  filter(Var1 == war.c.ne[2],
+         Var2 == war.c.vr[2],
+         Var3 == war.c.mb[2],
+         Var4 == war.c.nmb[2]) %>%
+  mutate(Parameter = c("war.c.ot", "war.c.ot"),
+         ParamTest = c("LowerBound", "UpperBound"))
+war_tornado <- rbind(war_df_base,
+                     war_df_1,
+                     war_df_2,
+                     war_df_3,
+                     war_df_4,
+                     war_df_5)
+# Save tornado data
+saveRDS(war_tornado, here::here("output","df_tornado_war_costs.rds"))
+```
+
+Generate tornado plot
+```{r }
+# Generate Tornado Plot for Rivaroxaban
+base.value = riv_tornado[1,"CER"]
+
+df_tornado <- riv_tornado %>%
+  filter(! Parameter == "Base") %>%
+  select(Parameter, ParamTest, CER) %>%
+  pivot_wider(
+    names_from = ParamTest,
+    values_from = CER
+  ) %>%
+  mutate(Diff = abs(LowerBound - UpperBound))
+
+# Credit: kikoralston, StackOverflow
+# get order of parameters according to size of intervals
+order.parameters <- df_tornado %>% arrange(Diff) %>%
+  mutate(Parameter=factor(x=Parameter, levels=Parameter)) %>%
+  select(Parameter) %>% unlist() %>% levels()
+
+# width of columns in plot (value between 0 and 1)
+width <- 0.95
+
+# get data frame in shape for ggplot and geom_rect
+df_tornado.2 <- df_tornado %>% 
+  # gather columns Lower_Bound and Upper_Bound into a single column using gather
+  gather(key='type', value='output.value', LowerBound:UpperBound) %>%
+  # just reordering columns
+  select(Parameter, type, output.value, Diff) %>%
+  # create the columns for geom_rect
+  mutate(Parameter=factor(Parameter, levels=order.parameters),
+         ymin=pmin(output.value, base.value),
+         ymax=pmax(output.value, base.value),
+         xmin=as.numeric(Parameter)-width/2,
+         xmax=as.numeric(Parameter)+width/2)
+
+# create plot
+# (use scale_x_continuous to change labels in y axis to name of parameters)
+ggplot() + 
+  geom_rect(data = df_tornado.2, 
+            aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=type)) +
+  theme_bw() + 
+  theme(legend.position = 'bottom',
+        legend.title = element_blank()) + 
+  geom_hline(yintercept = base.value) +
+  scale_x_continuous(breaks = c(1:length(order.parameters)), 
+                     labels = order.parameters) +
+  coord_flip() +
+  ylab("Cost-Effectiveness Ratio") +
+  xlab("Parameter") +
+  ggtitle("Tornado Plot for Rivaroxaban")
+
+```
+
+```{r }
+# Generate Tornado Plot for Warfarin
+base.value = war_tornado[1,"CER"]
+
+df_tornado <- war_tornado %>%
+  filter(! Parameter == "Base") %>%
+  select(Parameter, ParamTest, CER) %>%
+  pivot_wider(
+    names_from = ParamTest,
+    values_from = CER
+  ) %>%
+  mutate(Diff = abs(LowerBound - UpperBound))
+
+# Credit: kikoralston, StackOverflow
+# get order of parameters according to size of intervals
+order.parameters <- df_tornado %>% arrange(Diff) %>%
+  mutate(Parameter=factor(x=Parameter, levels=Parameter)) %>%
+  select(Parameter) %>% unlist() %>% levels()
+
+# width of columns in plot (value between 0 and 1)
+width <- 0.95
+
+# get data frame in shape for ggplot and geom_rect
+df_tornado.2 <- df_tornado %>% 
+  # gather columns Lower_Bound and Upper_Bound into a single column using gather
+  gather(key='type', value='output.value', LowerBound:UpperBound) %>%
+  # just reordering columns
+  select(Parameter, type, output.value, Diff) %>%
+  # create the columns for geom_rect
+  mutate(Parameter=factor(Parameter, levels=order.parameters),
+         ymin=pmin(output.value, base.value),
+         ymax=pmax(output.value, base.value),
+         xmin=as.numeric(Parameter)-width/2,
+         xmax=as.numeric(Parameter)+width/2)
+
+# create plot
+# (use scale_x_continuous to change labels in y axis to name of parameters)
+ggplot() + 
+  geom_rect(data = df_tornado.2, 
+            aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=type)) +
+  theme_bw() + 
+  theme(legend.position = 'bottom',
+        legend.title = element_blank()) + 
+  geom_hline(yintercept = base.value) +
+  scale_x_continuous(breaks = c(1:length(order.parameters)), 
+                     labels = order.parameters) +
+  coord_flip() +
+  ylab("Cost-Effectiveness Ratio") +
+  xlab("Parameter") +
+  ggtitle("Tornado Plot for Warfarin")
+
+```
