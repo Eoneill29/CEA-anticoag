@@ -1,7 +1,7 @@
 ---
 title: "CEA anticoag"
 author: "Emily O'Neill, Andrew Huang"
-date: "2023-08-21"
+date: "2024-04-21"
 output: html_document
 ---
 
@@ -93,6 +93,7 @@ ggplot() +
   ylab("Cost-Effectiveness Ratio") +
   xlab("Parameter") +
   ggtitle("Tornado Plot for Rivaroxaban")
+
 ```
 
 ```{r }
@@ -145,4 +146,67 @@ ggplot() +
   ylab("Cost-Effectiveness Ratio") +
   xlab("Parameter") +
   ggtitle("Tornado Plot for Warfarin")
+
+```
+
+Tornado plot for ICER
+```{r }
+# Generate Tornado Plot for Warfarin
+base.value = df_tornado_riv[1,"CER"] - df_tornado_war[1,"CER"]
+
+df_tornado_ICER_war <- df_tornado_war %>%
+  filter(! Parameter == "Base") %>%
+  mutate(ICER = df_tornado_riv[1,"CER"] - CER) %>%
+  select(Parameter, ParamTest, ICER)
+
+df_tornado_ICER_riv <- df_tornado_riv %>%
+  filter(! Parameter == "Base") %>%
+  mutate(ICER = CER - df_tornado_war[1,"CER"]) %>%
+  select(Parameter, ParamTest, ICER)
+
+df_tornado_ICER <- rbind(df_tornado_ICER_riv, df_tornado_ICER_war) %>%
+  pivot_wider(
+    names_from = ParamTest,
+    values_from = ICER
+  ) %>%
+  mutate(Diff = abs(LowerBound - UpperBound))
+
+# Credit: kikoralston, StackOverflow
+# get order of parameters according to size of intervals
+order.parameters <- df_tornado_ICER %>% arrange(Diff) %>%
+  mutate(Parameter=factor(x=Parameter, levels=Parameter)) %>%
+  select(Parameter) %>% unlist() %>% levels()
+
+# width of columns in plot (value between 0 and 1)
+width <- 0.95
+
+# get data frame in shape for ggplot and geom_rect
+df_tornado.2 <- df_tornado_ICER %>% 
+  # gather columns Lower_Bound and Upper_Bound into a single column using gather
+  gather(key='type', value='output.value', LowerBound:UpperBound) %>%
+  # just reordering columns
+  select(Parameter, type, output.value, Diff) %>%
+  # create the columns for geom_rect
+  mutate(Parameter=factor(Parameter, levels=order.parameters),
+         ymin=pmin(output.value, base.value),
+         ymax=pmax(output.value, base.value),
+         xmin=as.numeric(Parameter)-width/2,
+         xmax=as.numeric(Parameter)+width/2)
+
+# create plot
+# (use scale_x_continuous to change labels in y axis to name of parameters)
+ggplot() + 
+  geom_rect(data = df_tornado.2, 
+            aes(ymax=ymax, ymin=ymin, xmax=xmax, xmin=xmin, fill=type)) +
+  theme_bw() + 
+  theme(legend.position = 'bottom',
+        legend.title = element_blank()) + 
+  geom_hline(yintercept = base.value) +
+  scale_x_continuous(breaks = c(1:length(order.parameters)), 
+                     labels = order.parameters) +
+  coord_flip() +
+  ylab("Incremental Cost-Effectiveness Ratio") +
+  xlab("Parameter") +
+  ggtitle("Tornado Plot for ICER (Ref: Warfarin)")
+
 ```
