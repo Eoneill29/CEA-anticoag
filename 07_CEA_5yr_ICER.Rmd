@@ -1,7 +1,7 @@
 ---
-title: "CEA anticoag"
+title: "CEA anticoag - base case"
 author: "Emily O'Neill, Andrew Huang"
-date: "2023-06-08"
+date: "2025-04-13"
 output: html_document
 ---
 
@@ -96,13 +96,71 @@ summary.psa(psa, calc_sds=TRUE)
 
 Distribution of ICER estimates
 
+Table
 ```{r}
+sim_results_ICER <- as.data.frame(
+  cbind(inc_cost = sim_results_cost$riv - 
+                   sim_results_cost$war,
+        inc_effectiveness = sim_results_effectiveness$riv -                                           sim_results_effectiveness$war)) %>%
+  mutate(ICER = inc_cost/inc_effectiveness,
+         name = "MC")
 
+mean(sim_results_ICER$ICER)
+sd(sim_results_ICER$ICER)
+
+library(boot)
+set.seed(2025)
+boot.icer = boot(data=sim_results_ICER$ICER,
+                 R=1000,
+                 statistic=function(x,id){ mean(x[id])})
+boot.ci(boot.icer, type="bca")
+
+```
+
+Plot (ICERs)
+
+```{r}
+sim_results_ICER_boxplot <- sim_results_ICER %>%
+  add_row(inc_cost = delta.c,
+          inc_effectiveness = delta.e,
+          ICER = ICER,
+          name = "base")
+
+ggplot(sim_results_ICER_boxplot, aes(x=name, y=ICER)) + 
+  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) +
+  scale_y_continuous(limits = c(-5000, 0)) +
+  coord_flip() +
+  xlab("Analysis") + 
+  ylab("ICER ($/QALY)")
+
+```
+
+PSA plot (CERs)
+
+```{r}
 plot.psa(psa) +
   ggthemes::scale_color_colorblind() +
   ggthemes::scale_fill_colorblind() +
   xlab("Effectiveness (QALYs)") +
   guides(col = guide_legend(nrow = 2)) +
   theme(legend.position = "right")
+```
 
+Worst CERs (highest cost / lowest effectiveness)
+
+```{r}
+data.frame(
+  Strategy = c("Warfarin", "Rivaroxaban"),
+  max_cost = c(max(psa$cost$Warfarin), max(psa$cost$Rivaroxaban)),
+  min_cost = c(min(psa$cost$Warfarin), min(psa$cost$Rivaroxaban)),
+  max_effectiveness = c(max(psa$effectiveness$Warfarin),
+                        max(psa$effectiveness$Rivaroxaban)),
+  min_effectiveness = c(min(psa$effectiveness$Warfarin),
+                        min(psa$effectiveness$Rivaroxaban)),
+  best_CER = c(min(psa$cost$Warfarin)/max(psa$effectiveness$Warfarin),
+               min(psa$cost$Rivaroxaban)/max(psa$effectiveness$Rivaroxaban)),
+  worst_CER = c(max(psa$cost$Warfarin)/min(psa$effectiveness$Warfarin),
+                max(psa$cost$Rivaroxaban)/min(psa$effectiveness$Rivaroxaban))
+)
 ```

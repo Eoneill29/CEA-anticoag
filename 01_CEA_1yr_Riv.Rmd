@@ -1,7 +1,7 @@
 ---
 title: "CEA anticoag - rivaroxaban"
 author: "Emily O'Neill, Andrew Huang"
-date: "2023-06-08"
+date: "2025-04-13"
 output: html_document
 ---
 
@@ -73,11 +73,11 @@ c.nmb     <- 304  / 12                #Cost for CRNMB in Rivaroxaban arm ($304 a
 c.ot      <- 0    / 12                #Cost of off treatment ($0 annually)
 
 ##Utility Values
-u.ne    <- 0.825               #Utility of No Event
-u.vr    <- 0.76                #Utility of recurrence  
-u.mb    <- 0.61                #Utility of major bleed
-u.nmb   <- 0.65                #Utility of CRNMB 
-u.ot    <- 0.68                #Utility of off treatment 
+u.ne    <- 0.825  / 12             #Utility of No Event
+u.vr    <- 0.76   / 12             #Utility of recurrence  
+u.mb    <- 0.61   / 12             #Utility of major bleed
+u.nmb   <- 0.65   / 12             #Utility of CRNMB 
+u.ot    <- 0.68   / 12             #Utility of off treatment 
 
 ##Vectors for cost and utility values 
 v.cost <- c(c.ne, c.vr, c.mb, c.nmb, c.ot)
@@ -159,11 +159,11 @@ c.nmb     <- 304 / 12                #Cost for CRNMB in Rivaroxaban arm ($162)
 c.ot      <- 0 / 12                  #Cost of off treatment
 
 ##Utility Values
-u.ne    <- 0.825               #Utility of No Event
-u.vr    <- 0.76                #Utility of recurrence  
-u.mb    <- 0.61                #Utility of major bleed
-u.nmb   <- 0.65                #Utility of CRNMB 
-u.ot    <- 0.59                #Utility of off treatment  
+u.ne    <- 0.825 / 12              #Utility of No Event
+u.vr    <- 0.76  / 12              #Utility of recurrence  
+u.mb    <- 0.61  / 12              #Utility of major bleed
+u.nmb   <- 0.65  / 12              #Utility of CRNMB 
+u.ot    <- 0.59  / 12              #Utility of off treatment  
 
 ##Vectors for cost and utility values 
 v.cost <- c(c.ne, c.vr, c.mb, c.nmb, c.ot)

@@ -58,17 +58,17 @@ war.v.cost <- c(war.c.ne, war.c.vr, war.c.mb, war.c.nmb, war.c.ot)
 
 #' @param v.util is a numeric vector containing utility values for each state
 ##Rivaroxaban Values 
-riv.u.ne    <- 0.825               #Utility of No Event
-riv.u.vr    <- 0.76                #Utility of recurrence  
-riv.u.mb    <- 0.61                #Utility of major bleed
-riv.u.nmb   <- 0.65                #Utility of CRNMB 
-riv.u.ot    <- 0.59                #Utility of off treatment 
+riv.u.ne    <- 0.825/ 12               #Utility of No Event
+riv.u.vr    <- 0.76 / 12               #Utility of recurrence  
+riv.u.mb    <- 0.61 / 12               #Utility of major bleed
+riv.u.nmb   <- 0.65 / 12               #Utility of CRNMB 
+riv.u.ot    <- 0.59 / 12               #Utility of off treatment 
 ##Warfarin Values 
-war.u.ne    <- 0.825               #Utility of No Event
-war.u.vr    <- 0.76                #Utility of recurrence  
-war.u.mb    <- 0.61                #Utility of major bleed
-war.u.nmb   <- 0.65                #Utility of CRNMB 
-war.u.ot    <- 0.59                #Utility of off treatment
+war.u.ne    <- 0.825/ 12               #Utility of No Event
+war.u.vr    <- 0.76 / 12               #Utility of recurrence  
+war.u.mb    <- 0.61 / 12               #Utility of major bleed
+war.u.nmb   <- 0.65 / 12               #Utility of CRNMB 
+war.u.ot    <- 0.59 / 12               #Utility of off treatment
 ##Vectors for utility values 
 riv.v.util <- c(riv.u.ne, riv.u.vr, riv.u.mb, riv.u.nmb, riv.u.ot)
 war.v.util <- c(war.u.ne, war.u.vr, war.u.mb, war.u.nmb, war.u.ot)
@@ -234,7 +234,46 @@ summary.psa(psa, calc_sds=TRUE)
 
 ```
 
+
 Distribution of ICER estimates
+
+Table
+```{r}
+sim_results_ICER <- as.data.frame(
+  cbind(inc_cost = sim_results_cost$riv - 
+                   sim_results_cost$war,
+        inc_effectiveness = sim_results_effectiveness$riv -                                           sim_results_effectiveness$war)) %>%
+  mutate(ICER = inc_cost/inc_effectiveness,
+         name = "MC")
+
+mean(sim_results_ICER$ICER)
+sd(sim_results_ICER$ICER)
+
+library(boot)
+set.seed(2025)
+boot.icer = boot(data=sim_results_ICER$ICER,
+                 R=1000,
+                 statistic=function(x,id){ mean(x[id])})
+boot.ci(boot.icer, type="bca")
+
+```
+
+Plot (ICERs)
+
+```{r}
+sim_results_ICER_boxplot <- sim_results_ICER
+
+ggplot(sim_results_ICER_boxplot, aes(x=name, y=ICER)) + 
+  geom_boxplot() + 
+  geom_boxplot(outlier.shape = NA) +
+  #scale_y_continuous(limits = c(-5000, 0)) +
+  coord_flip() +
+  xlab("Analysis") + 
+  ylab("ICER ($/QALY)")
+
+```
+
+Plot (CERs)
 
 ```{r}
 

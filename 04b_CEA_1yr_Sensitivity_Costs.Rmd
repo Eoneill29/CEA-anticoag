@@ -41,17 +41,17 @@ v.M_1 <- c(1, 0, 0, 0, 0)                         # Everyone begins in no event 
 
 #' @param v.util is a numeric vector containing utility values for each state
 ##Rivaroxaban Values 
-riv.u.ne    <- 0.825               #Utility of No Event
-riv.u.vr    <- 0.76                #Utility of recurrence  
-riv.u.mb    <- 0.61                #Utility of major bleed
-riv.u.nmb   <- 0.65                #Utility of CRNMB 
-riv.u.ot    <- 0.59                #Utility of off treatment 
+riv.u.ne    <- 0.825  / 12               #Utility of No Event
+riv.u.vr    <- 0.76   / 12               #Utility of recurrence  
+riv.u.mb    <- 0.61   / 12               #Utility of major bleed
+riv.u.nmb   <- 0.65   / 12               #Utility of CRNMB 
+riv.u.ot    <- 0.59   / 12               #Utility of off treatment 
 ##Warfarin Values 
-war.u.ne    <- 0.825               #Utility of No Event
-war.u.vr    <- 0.76                #Utility of recurrence  
-war.u.mb    <- 0.61                #Utility of major bleed
-war.u.nmb   <- 0.65                #Utility of CRNMB 
-war.u.ot    <- 0.59                #Utility of off treatment
+war.u.ne    <- 0.825  / 12               #Utility of No Event
+war.u.vr    <- 0.76   / 12               #Utility of recurrence  
+war.u.mb    <- 0.61   / 12               #Utility of major bleed
+war.u.nmb   <- 0.65   / 12               #Utility of CRNMB 
+war.u.ot    <- 0.59   / 12               #Utility of off treatment
 ##Vectors for utility values 
 riv.v.util <- c(riv.u.ne, riv.u.vr, riv.u.mb, riv.u.nmb, riv.u.ot)
 war.v.util <- c(war.u.ne, war.u.vr, war.u.mb, war.u.nmb, war.u.ot)
