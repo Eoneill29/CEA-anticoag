@@ -147,7 +147,7 @@ plot.psa(psa) +
   theme(legend.position = "right")
 ```
 
-Worst CERs (highest cost / lowest effectiveness)
+Range of CERs (highest cost / lowest effectiveness)
 
 ```{r}
 data.frame(
@@ -157,4 +157,36 @@ data.frame(
   worst_CER = c(max(psa$cost$Warfarin)/min(psa$effectiveness$Warfarin),
                 max(psa$cost$Rivaroxaban)/min(psa$effectiveness$Rivaroxaban))
 )
+```
+
+% of CER simulations where rivaroxaban is more cost-effective than warfarin
+
+```{r}
+# Simulated CERs for warfarin
+psa_cer_war <- round(psa$cost$Warfarin / psa$effectiveness$Warfarin, digits=2)
+# Simulated CERs for rivaroxaban
+psa_cer_riv <- round(psa$cost$Rivaroxaban / psa$effectiveness$Rivaroxaban, digits=2)
+
+# simulated CERs for rivaroxaban that are more cost effective than warfarin
+psa_cer <- expand.grid(war = psa_cer_war, riv = psa_cer_riv) %>%
+  mutate(riv_costeffective = ifelse(riv < war, 1, 0))
+
+sum(psa_cer$riv_costeffective)/nrow(psa_cer)
+
+```
+
+% of CER simulations where rivaroxaban is more cost-effective than the best warfarin CER
+
+```{r}
+# Simulated CERs for warfarin
+psa_cer_war <- round(psa$cost$Warfarin / psa$effectiveness$Warfarin, digits=2)
+psa_cer_war <- sort(psa_cer_war)
+# Simulated CERs for rivaroxaban
+psa_cer_riv <- round(psa$cost$Rivaroxaban / psa$effectiveness$Rivaroxaban, digits=2)
+psa_cer_riv <- sort(psa_cer_riv)
+
+# simulated CERs for rivaroxaban that are more cost effective than best warfarin
+# i.e., lower than the minimum CER for warfarin
+psa_cer_riv_costeffective <- psa_cer_riv[psa_cer_riv < psa_cer_war[1]]
+length(psa_cer_riv_costeffective) / length(psa_cer_riv)
 ```
