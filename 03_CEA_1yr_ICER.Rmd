@@ -169,6 +169,7 @@ psa_cer_riv <- round(psa$cost$Rivaroxaban / psa$effectiveness$Rivaroxaban, digit
 
 # simulated CERs for rivaroxaban that are more cost effective than warfarin
 psa_cer <- expand.grid(war = psa_cer_war, riv = psa_cer_riv) %>%
+  distinct() %>%
   mutate(riv_costeffective = ifelse(riv < war, 1, 0))
 
 sum(psa_cer$riv_costeffective)/nrow(psa_cer)
