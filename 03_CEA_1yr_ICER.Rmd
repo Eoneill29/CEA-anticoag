@@ -47,7 +47,10 @@ v.e <- c(sim_results_war_noMC$te_hat,
 delta.c <- v.c[2] - v.c[1]            # calculate incremental costs between rivaroxaban and warfarin 
 delta.e <- v.e[2] - v.e[1]            # calculate incremental QALYs between rivaroxaban and warfarin
 ICER <- delta.c / delta.e             # calculate the ICER
-results <- c(delta.c, delta.e, ICER)  # store the values in a new variable
+results <- list("delta.c" = delta.c, 
+                "delta.e" = delta.e, 
+                "ICER" = ICER)  # store the values in a new variable
+saveRDS(results, here::here("output","results_1yr_basecase.rds"))
 
 # Create full incremental cost-effectiveness analysis table
 table_markov <- data.frame(
